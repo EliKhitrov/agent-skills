@@ -55,13 +55,22 @@ The `skills` CLI will present a picker, let you choose which skills to install, 
 
 ### OpenClaw
 
-Add both `openclaw/` and `pure/` to `openclaw.json`:
-```json
-{
-  "skills": {
-    "load": {
-      "extraDirs": ["~/agent-skills/openclaw", "~/agent-skills/pure"]
-    }
-  }
-}
+**Option 1 — Clone and symlink into a workspace**
+
+Clone the repo once, then symlink individual skills into whichever workspace needs them:
+
+```bash
+git clone https://github.com/EliKhitrov/agent-skills.git ~/agent-skills
+
+# symlink into a specific workspace (repeat per workspace as needed)
+ln -s ~/agent-skills/pure/cli-cmd <workspace>/skills/cli-cmd
+ln -s ~/agent-skills/openclaw/analyse-skill <workspace>/skills/analyse-skill
+```
+
+Only symlink what the workspace actually uses — skills load into the agent's context, so keep it selective.
+
+**Option 2 — Install from ClawHub**
+
+```bash
+openclaw skills install @EliKhitrov/<skill-name>
 ```
