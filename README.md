@@ -37,13 +37,6 @@ Skills that depend on Claude Code-specific features:
 - `.claude/` directory conventions
 - `claude --permission-mode bypassPermissions` patterns
 
-## Adding a skill
-
-1. Decide which bucket: does it use runtime APIs? → `openclaw/` or `claude/`. Pure reasoning? → `pure/`.
-2. Create `<platform>/<skill-name>/SKILL.md` with name + description frontmatter.
-3. Add supporting files under `scripts/`, `references/`, `agents/`, `assets/` as needed.
-4. Keep `SKILL.md` lean — move long docs to `references/`, scripts to `scripts/`.
-
 ## Installing
 
 **OpenClaw** — add both `openclaw/` and `pure/` to `openclaw.json`:
