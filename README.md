@@ -41,8 +41,6 @@ Skills that depend on Claude Code-specific features:
 
 ### Claude Code (and other agents)
 
-Requires [Node.js](https://nodejs.org) (for `npx`). Works on Windows, macOS, and Linux.
-
 Install pure skills (work in any agent):
 ```bash
 npx skills@latest add EliKhitrov/agent-skills/pure
