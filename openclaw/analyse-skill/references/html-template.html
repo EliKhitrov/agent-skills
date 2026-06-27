@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{SKILL_NAME}} — Architecture Report</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117; --card: #1a1d27; --border: #2d3248;
+      --text: #e2e8f0; --muted: #8892b0;
+      --accent: #64ffda; --accent2: #c792ea;
+      --danger: #ff5555; --warning: #ffb86c; --success: #50fa7b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; padding: 40px 20px; line-height: 1.6; }
+    .container { margin: 0 auto; }
+
+    header { margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+    header h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
+    header h1 .name { color: var(--accent); }
+    header .desc { color: var(--muted); font-size: 1.1rem; margin-top: 8px; }
+    header .meta { color: var(--muted); font-size: 0.85rem; margin-top: 12px; opacity: 0.8; }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 4px; }
+    .tab { padding: 10px 20px; cursor: pointer; font-size: 0.9rem; font-weight: 500; color: var(--muted); background: transparent; border: 1px solid transparent; border-radius: 8px; white-space: nowrap; transition: all 0.2s; user-select: none; }
+    .tab.active { color: var(--accent); background: rgba(100,255,218,0.1); border-color: var(--accent); }
+    .tab:hover:not(.active) { color: var(--text); background: var(--card); }
+
+    .panel { display: none; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 32px; animation: fadeIn 0.2s ease-out; }
+    .panel.active { display: block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+    section { margin-bottom: 36px; }
+    h2 { font-size: 1.35rem; margin-bottom: 16px; color: var(--accent2); }
+    h3 { font-size: 1.05rem; margin: 24px 0 12px; color: var(--text); border-left: 3px solid var(--accent); padding-left: 10px; }
+    p { margin-bottom: 10px; opacity: 0.9; }
+
+    .mermaid-wrap { background: #1a1d27; padding: 20px; border-radius: 8px; margin-bottom: 20px; overflow-x: hidden; min-height: 60px; cursor: pointer; position: relative; }
+    .mermaid-wrap::after { content: '⤢ open full size'; position: absolute; top: 10px; right: 14px; font-size: 0.72rem; color: var(--muted); opacity: 0; transition: opacity 0.15s; pointer-events: none; }
+    .mermaid-wrap:hover::after { opacity: 1; }
+    .mermaid-wrap:hover { outline: 1px solid var(--border); }
+    .mermaid-wrap .mermaid { display: block; }
+    .mermaid-wrap svg { width: 100% !important; height: auto !important; }
+
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.88rem; }
+    th { text-align: left; padding: 11px 14px; background: rgba(255,255,255,0.05); color: var(--accent); border-bottom: 2px solid var(--border); }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+    .badge-llm    { background: rgba(199,146,234,0.2); color: var(--accent2); }
+    .badge-det    { background: rgba(100,255,218,0.2); color: var(--accent); }
+    .badge-hybrid { background: rgba(255,184,108,0.2); color: var(--warning); }
+    .risk-low    { color: var(--success); font-weight: 600; }
+    .risk-medium { color: var(--warning); font-weight: 600; }
+    .risk-high   { color: var(--danger);  font-weight: 700; }
+
+    pre { background: #000; padding: 14px; border-radius: 8px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin-bottom: 14px; border: 1px solid var(--border); }
+    code { font-family: monospace; background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 3px; font-size: 0.88em; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+    .card { background: rgba(255,255,255,0.03); padding: 18px; border-radius: 8px; border: 1px solid var(--border); }
+    .card h4 { margin-bottom: 10px; color: var(--accent); font-size: 0.95rem; }
+    .card p { font-size: 0.88rem; color: var(--muted); }
+    .card ul { list-style: none; }
+    .card li { margin-bottom: 7px; padding-left: 18px; position: relative; font-size: 0.88rem; }
+    .card li::before { content: '→'; position: absolute; left: 0; color: var(--accent); }
+
+    /* Implementation map */
+    .impl-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .impl-col { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+    .impl-col h4 { font-size: 0.9rem; color: var(--accent2); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .impl-item { display: flex; align-items: flex-start; gap: 8px; padding: 7px 10px; margin-bottom: 6px; background: rgba(255,255,255,0.03); border-radius: 5px; font-size: 0.84rem; border: 1px solid transparent; }
+    .impl-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+    .dot-llm    { background: var(--accent2); }
+    .dot-det    { background: var(--accent); }
+    .dot-hybrid { background: var(--warning); }
+    .dot-file   { background: var(--muted); }
+    .dot-ext    { background: var(--danger); opacity: 0.7; }
+    .impl-link  { cursor: pointer; transition: background 0.12s, border-color 0.12s; }
+    .impl-link:hover { background: rgba(100,255,218,0.12); border-color: var(--accent); }
+    .impl-col-sep { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 12px 0 6px 10px; }
+
+    /* Data flow chain */
+    .flow-chain { display: flex; flex-direction: column; align-items: stretch; gap: 0; }
+    .flow-box.stage {
+      background: rgba(100,255,218,0.07); border: 1px solid rgba(100,255,218,0.3); color: var(--text);
+      cursor: pointer; user-select: none; transition: background 0.15s, border-color 0.15s;
+      display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px;
+    }
+    .flow-box.stage:hover { background: rgba(100,255,218,0.13); border-color: var(--accent); }
+    .flow-box.stage.active { background: rgba(100,255,218,0.18); border-color: var(--accent); }
+    .flow-box.stage.active .stage-name { color: var(--accent); }
+    .stage-name { font-weight: 600; white-space: nowrap; }
+    .stage-desc { color: var(--muted); font-weight: 400; font-size: 0.82rem; }
+    .flow-node { display: flex; align-items: center; gap: 14px; width: 100%; }
+    .flow-box { flex: 1; padding: 10px 16px; border-radius: 6px; font-size: 0.88rem; font-weight: 500; }
+    .flow-box.actor  { background: rgba(100,255,218,0.1); border: 1px solid var(--accent);  color: var(--accent); }
+    .flow-box.file   { background: rgba(140,150,180,0.1); border: 1px solid var(--border); color: var(--text); font-family: monospace; font-size: 0.82rem; }
+    .flow-box.script { background: rgba(199,146,234,0.1); border: 1px solid var(--accent2); color: var(--accent2); }
+    .flow-badge { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
+    .flow-connector { display: flex; align-items: center; gap: 8px; padding: 4px 0 4px 20px; color: var(--muted); font-size: 0.8rem; }
+    .flow-connector::before { content: '↓'; color: var(--accent); font-size: 1rem; }
+
+    /* Pipeline master-detail */
+    .pipeline-layout { display: flex; align-items: flex-start; gap: 24px; }
+    .stage-detail {
+      display: none; background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 24px 28px; width: 360px; flex-shrink: 0;
+      animation: sdFadeIn 0.15s ease-out;
+    }
+    .stage-detail.visible { display: block; }
+    @keyframes sdFadeIn { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } }
+    .detail-num { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .detail-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+    .detail-row { margin-bottom: 14px; }
+    .detail-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 4px; }
+    .detail-value { font-size: 0.88rem; line-height: 1.5; }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 4px; padding: 3px 9px; font-size: 0.8rem; font-family: monospace; }
+    .tag-link { cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; }
+    .tag-link:hover { background: rgba(100,255,218,0.12); border-color: var(--accent); color: var(--accent); }
+    @keyframes depPulse { 0%,100% { box-shadow: none; } 20% { box-shadow: 0 0 0 3px rgba(100,255,218,0.5); } }
+    .dep-highlight { animation: depPulse 1.5s ease-out; }
+    .artifact-row { cursor: pointer; user-select: none; }
+    .artifact-row:hover td { background: rgba(100,255,218,0.04); }
+    .artifact-row.expanded td { background: rgba(100,255,218,0.06); border-bottom: none; }
+    .artifact-row.expanded td:first-child::before { content: '▾ '; color: var(--accent); font-size: 0.8em; }
+    .artifact-row td:first-child::before { content: '▸ '; color: var(--muted); font-size: 0.8em; }
+    .artifact-expand { display: none; }
+    .artifact-expand.open { display: table-row; }
+    .artifact-expand td { padding: 0; background: rgba(100,255,218,0.03); border-bottom: 1px solid var(--border); }
+    .artifact-detail { padding: 14px 20px 16px; font-size: 0.86rem; line-height: 1.65; border-left: 3px solid var(--accent); margin: 0; }
+    .artifact-detail p { color: var(--muted); margin-bottom: 6px; }
+    .artifact-detail p:last-child { margin-bottom: 0; }
+    .script-row td:first-child, .artifact-row td:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .script-row { cursor: pointer; user-select: none; }
+    .script-row:hover td { background: rgba(100,255,218,0.04); }
+    .script-row.expanded td { background: rgba(100,255,218,0.06); border-bottom: none; }
+    .script-row.expanded td:first-child::before { content: '▾ '; color: var(--accent); font-size: 0.8em; }
+    .script-row td:first-child::before { content: '▸ '; color: var(--muted); font-size: 0.8em; }
+    .script-expand { display: none; }
+    .script-expand.open { display: table-row; }
+    .script-expand td { padding: 0; background: rgba(100,255,218,0.03); border-bottom: 1px solid var(--border); }
+    .script-detail { padding: 14px 20px 16px; font-size: 0.86rem; line-height: 1.65; border-left: 3px solid var(--accent2); margin: 0; }
+    .script-detail > p { color: var(--muted); margin-bottom: 12px; }
+    .script-detail-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .script-detail-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); width: 72px; flex-shrink: 0; padding-top: 5px; }
+
+    /* Risk cards */
+    .risk-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 18px; margin-bottom: 16px; }
+    .risk-card h4 { font-size: 0.95rem; margin-bottom: 10px; color: var(--accent); }
+    .risk-card ul { list-style: none; }
+    .risk-card li { margin-bottom: 8px; padding-left: 18px; position: relative; font-size: 0.88rem; }
+    .risk-card li::before { content: '→'; position: absolute; left: 0; color: var(--warning); }
+    .risk-card p { font-size: 0.88rem; }
+
+    .checkpoint-list { list-style: none; }
+    .checkpoint-list li { display: flex; align-items: baseline; gap: 10px; padding: 9px 14px; margin-bottom: 8px; background: rgba(80,250,123,0.05); border: 1px solid rgba(80,250,123,0.2); border-radius: 6px; font-size: 0.88rem; }
+    .checkpoint-list li code { color: var(--success); }
+
+    .act-btn { padding: 6px 14px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all 0.15s; }
+    .act-btn:hover { border-color: var(--muted); color: var(--text); background: rgba(255,255,255,0.04); }
+    .act-wrap { position: relative; background: #1a1d27; padding: 20px; border-radius: 8px; overflow-x: auto; min-height: 80px; }
+    .act-wrap:hover { outline: 1px solid var(--border); }
+    .act-open-link { position: absolute; top: 10px; right: 14px; font-size: 0.72rem; color: var(--muted); opacity: 0; transition: opacity 0.15s; cursor: pointer; z-index: 10; user-select: none; }
+    .act-wrap:hover .act-open-link { opacity: 1; }
+
+    footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.78rem; text-align: center; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>🏗️ <span class="name">{{SKILL_NAME}}</span></h1>
+    <div class="desc">{{SKILL_DESC}}</div>
+    <div class="meta">Architecture Report &nbsp;|&nbsp; Generated at: {{GENERATED_AT}} &nbsp;|&nbsp; Run duration: {{DURATION}}</div>
+    <div class="meta">Cost: {{ORCHESTRATOR_COST}} &nbsp;|&nbsp; {{SUBAGENT_COST}} &nbsp;|&nbsp; Total: {{TOTAL_COST}}</div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" onclick="show('overview',this)">📄 Overview</div>
+    <div class="tab" onclick="show('diagrams',this)">📊 Diagrams</div>
+    <div class="tab" onclick="show('artifacts',this)">📦 Artifacts</div>
+    <div class="tab" onclick="show('agents',this)">🤖 Agents &amp; Logic</div>
+    {{RR_TAB_BUTTON}}
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="overview" class="panel active">
+    <section>
+      <h2>Interface &amp; Invocation</h2>
+      {{INVOCATION_UI}}
+    </section>
+    <section>
+      <h2>Pipeline Phases</h2>
+      {{PIPELINE_HTML}}
+    </section>
+  </div>
+
+  <!-- DIAGRAMS -->
+  <div id="diagrams" class="panel">
+    <section>
+      <h3>Implementation Map</h3>
+      {{IMPLEMENTATION_MAP}}
+    </section>
+    <section>
+      <h3>Activity Diagram</h3>
+      <script>window.ACTIVITY_DATA = {{ACTIVITY_DIAGRAM_DATA}};</script>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 10px">
+        <span style="font-size:0.83rem;color:var(--muted)" id="act-lbl">Loading…</span>
+        <div style="display:flex;gap:8px">
+          <button class="act-btn" onclick="actCollapseAll()">Collapse all</button>
+          <button class="act-btn" onclick="actExpandAll()">Expand all</button>
+        </div>
+      </div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">Click a <strong>📦 phase node</strong> to expand it. Click the <strong>▾ header</strong> to collapse it.</p>
+      <div class="act-wrap">
+        <span class="act-open-link" onclick="openActivityDiagram()">⤢ open full size</span>
+        <div id="act-cont"></div>
+      </div>
+    </section>
+    <section>
+      <h3>Actor Sequence</h3>
+      <div class="mermaid-wrap" onclick="openDiagram(this)"><div class="mermaid">{{SEQUENCE_CODE}}</div></div>
+    </section>
+  </div>
+
+  <!-- ARTIFACTS -->
+  <div id="artifacts" class="panel">
+    <section>
+      <h3>Artifact Registry</h3>
+      {{ARTIFACTS_TABLE_HTML}}
+    </section>
+  </div>
+
+  <!-- AGENTS & LOGIC -->
+  <div id="agents" class="panel">
+    <section>
+      <h2>Agent Responsibilities</h2>
+      <table>
+        <thead><tr><th>Actor</th><th>Type</th><th>Model</th><th>Responsibility</th></tr></thead>
+        <tbody>{{ACTORS_TABLE}}</tbody>
+      </table>
+    </section>
+    <section>
+      <h2>Scripts</h2>
+      {{SCRIPTS_TABLE_HTML}}
+    </section>
+    <section>
+      <h2>External Dependencies</h2>
+      <div class="grid">{{DEPENDENCIES_LIST}}</div>
+    </section>
+  </div>
+
+  <!-- RISKS & RESILIENCE (conditional) -->
+  {{RR_TAB_PANEL}}
+
+  <footer>Generated by OpenClaw Skill Architect · {{SKILL_NAME}}</footer>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'dark',
+    securityLevel: 'loose',
+    flowchart: { curve: 'basis', padding: 20, useMaxWidth: true },
+    sequence: { actorMargin: 50, messageMargin: 20, useMaxWidth: true }
+  });
+
+  // Lazy-render: only process diagrams when the panel first becomes visible.
+  // This avoids SVG rendering with zero dimensions inside display:none panels.
+  const rendered = new Set();
+  function initPanel(id) {
+    if (rendered.has(id)) return;
+    rendered.add(id);
+    const nodes = document.querySelectorAll('#' + id + ' .mermaid');
+    if (nodes.length > 0) mermaid.run({ nodes: Array.from(nodes) });
+    if (id === 'diagrams' && window.initActivityDiagram) window.initActivityDiagram();
+  }
+  window.addEventListener('DOMContentLoaded', () => initPanel('overview'));
+
+  function openDiagram(wrap) {
+    const svg = wrap.querySelector('svg');
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    const scale = 2;
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('width', rect.width);
+    clone.setAttribute('height', rect.height);
+    const svgBlob = new Blob([new XMLSerializer().serializeToString(clone)], {type: 'image/svg+xml;charset=utf-8'});
+    const svgUrl = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      canvas.width = rect.width * scale;
+      canvas.height = rect.height * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#0f1117';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(svgUrl);
+      canvas.toBlob(function(blob) {
+        window.open(URL.createObjectURL(blob), '_blank');
+      }, 'image/png');
+    };
+    img.onerror = function() {
+      URL.revokeObjectURL(svgUrl);
+      window.open(URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], {type: 'image/svg+xml'})), '_blank');
+    };
+    img.src = svgUrl;
+  }
+
+  function openActivityDiagram() {
+    const svg = document.getElementById('act-cont').querySelector('svg');
+    if (!svg) return;
+    const svgStr = new XMLSerializer().serializeToString(svg);
+    const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:24px;background:#0f1117}svg{width:100%;height:auto}</style></head><body>' + svgStr + '</body></html>';
+    window.open(URL.createObjectURL(new Blob([html], {type: 'text/html;charset=utf-8'})), '_blank');
+  }
+
+  function navTo(panelId, anchorId) {
+    const tab = document.querySelector('.tab[onclick*="\'' + panelId + '\'"]');
+    if (tab) show(panelId, tab);
+    if (anchorId) setTimeout(() => {
+      const el = document.getElementById(anchorId);
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('dep-highlight');
+      setTimeout(() => el.classList.remove('dep-highlight'), 1500);
+    }, 150);
+  }
+  function goDep(id)    { navTo('agents', id); }
+  function goArt(id)    { navTo('artifacts', id); }
+  function goScript(id) { navTo('agents', id); }
+  function goActor(id)  { navTo('agents', id); }
+
+  function toggleArtifact(row) {
+    const expand = row.nextElementSibling;
+    if (expand && expand.classList.contains('artifact-expand')) {
+      expand.classList.toggle('open');
+      row.classList.toggle('expanded');
+    }
+  }
+
+  function toggleScript(row) {
+    const expand = row.nextElementSibling;
+    if (expand && expand.classList.contains('script-expand')) {
+      expand.classList.toggle('open');
+      row.classList.toggle('expanded');
+    }
+  }
+
+  function show(id, tab) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    tab.classList.add('active');
+    initPanel(id);
+  }
+
+  // Activity Diagram — data injected via window.ACTIVITY_DATA by render.py
+  (function() {
+    const SHAPES = new Set(['rect','polygon','circle','ellipse','path']);
+    let actState = 0, actUid = 0, actBusy = false;
+
+    async function showActivity(s) {
+      if (actBusy) return;
+      actBusy = true; actState = s;
+      const el = document.getElementById('act-cont');
+      const data = window.ACTIVITY_DATA;
+      if (!el || !data) { actBusy = false; return; }
+      actUid++;
+      try {
+        const { svg } = await mermaid.render('actuid' + actUid, data.diagrams[String(s)]);
+        el.innerHTML = svg;
+        const svgEl = el.querySelector('svg');
+        if (svgEl) { svgEl.style.width = '100%'; svgEl.style.height = 'auto'; }
+      } catch(e) {
+        el.innerHTML = '<span style="color:#ff5555;font-size:0.84rem">Render error: ' + e.message + '</span>';
+        actBusy = false; return;
+      }
+      el.querySelectorAll('g').forEach(g => {
+        if (!Array.from(g.children).some(c => SHAPES.has(c.tagName.toLowerCase()))) return;
+        const txt = g.textContent || '';
+        for (const ph of data.collapsible) {
+          if (txt.includes(ph.name)) {
+            g.setAttribute('style', (g.getAttribute('style') || '') + '; cursor:pointer; pointer-events:all;');
+            g.addEventListener('click', e => { e.stopPropagation(); showActivity(actState ^ ph.bit); });
+            break;
+          }
+        }
+      });
+      const n = data.collapsible.length;
+      const exp = data.collapsible.filter(ph => s & ph.bit).length;
+      const lbl = document.getElementById('act-lbl');
+      if (lbl) lbl.innerHTML =
+        exp === 0 ? '<strong>Collapsed</strong> — ' + n + ' phases folded' :
+        exp === n ? '<strong>Expanded</strong> — all phases visible' :
+        '<strong>Partial</strong> — ' + exp + ' of ' + n + ' phases expanded';
+      actBusy = false;
+    }
+
+    window.actExpandAll   = () => showActivity(window.ACTIVITY_DATA ? window.ACTIVITY_DATA.all_expanded : 0);
+    window.actCollapseAll = () => showActivity(0);
+    window.initActivityDiagram = () => { if (!window._actInit) { window._actInit = true; showActivity(0); } };
+  })();
+</script>
+</body>
+</html>
