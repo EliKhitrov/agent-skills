@@ -39,18 +39,31 @@ Skills that depend on Claude Code-specific features:
 
 ## Installing
 
-**OpenClaw** — add both `openclaw/` and `pure/` to `openclaw.json`:
+### Claude Code (and other agents)
+
+Requires [Node.js](https://nodejs.org) (for `npx`). Works on Windows, macOS, and Linux.
+
+Install pure skills (work in any agent):
+```bash
+npx skills@latest add EliKhitrov/agent-skills/pure
+```
+
+Install Claude Code-specific skills:
+```bash
+npx skills@latest add EliKhitrov/agent-skills/claude
+```
+
+The `skills` CLI will present a picker, let you choose which skills to install, and place them in the right directory for your agent automatically.
+
+### OpenClaw
+
+Add both `openclaw/` and `pure/` to `openclaw.json`:
 ```json
 {
   "skills": {
     "load": {
-      "extraDirs": ["~/skills-repo/openclaw", "~/skills-repo/pure"]
+      "extraDirs": ["~/agent-skills/openclaw", "~/agent-skills/pure"]
     }
   }
 }
-```
-
-**Claude Code** — symlink `pure/` into `.claude/skills/`:
-```bash
-ln -s ~/skills-repo/pure ~/.claude/skills/pure
 ```
