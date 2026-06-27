@@ -4,6 +4,8 @@ description: "Analyze any OpenClaw skill and render a comprehensive architecture
 metadata:
   openclaw:
     emoji: "🏗️"
+    requires:
+      anyBins: ["python3", "python"]
 user-invocable: true
 ---
 
