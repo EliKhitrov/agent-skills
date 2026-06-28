@@ -36,12 +36,23 @@
     h3 { font-size: 1.05rem; margin: 24px 0 12px; color: var(--text); border-left: 3px solid var(--accent); padding-left: 10px; }
     p { margin-bottom: 10px; opacity: 0.9; }
 
-    .mermaid-wrap { background: #1a1d27; padding: 20px; border-radius: 8px; margin-bottom: 20px; overflow-x: hidden; min-height: 60px; cursor: pointer; position: relative; }
-    .mermaid-wrap::after { content: '⤢ open full size'; position: absolute; top: 10px; right: 14px; font-size: 0.72rem; color: var(--muted); opacity: 0; transition: opacity 0.15s; pointer-events: none; }
-    .mermaid-wrap:hover::after { opacity: 1; }
+    .mermaid-wrap { background: #1a1d27; padding: 20px; border-radius: 8px; margin-bottom: 20px; overflow: hidden; min-height: 60px; position: relative; }
     .mermaid-wrap:hover { outline: 1px solid var(--border); }
     .mermaid-wrap .mermaid { display: block; }
-    .mermaid-wrap svg { width: 100% !important; height: auto !important; }
+    .mermaid-wrap svg { width: 100% !important; height: auto !important; display: block; }
+
+    .diag-controls { position: absolute; top: 8px; right: 10px; display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; z-index: 10; }
+    .mermaid-wrap:hover .diag-controls { opacity: 1; }
+    .diag-btn { padding: 3px 9px; font-size: 0.78rem; font-weight: 700; cursor: pointer; border-radius: 4px; border: 1px solid var(--border); background: var(--card); color: var(--muted); transition: all 0.15s; user-select: none; line-height: 1.6; }
+    .diag-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(100,255,218,0.08); }
+
+    .diag-modal { display: none; position: fixed; inset: 0; z-index: 1000; background: #0f1117; flex-direction: column; }
+    .diag-modal.open { display: flex; }
+    .diag-modal-bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--card); flex-shrink: 0; }
+    .diag-modal-title { font-size: 0.82rem; color: var(--muted); flex: 1; }
+    .diag-modal-body { flex: 1; overflow: hidden; position: relative; cursor: grab; }
+    .diag-modal-body.grabbing { cursor: grabbing; }
+    .diag-modal-body svg { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; }
 
     table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.88rem; }
     th { text-align: left; padding: 11px 14px; background: rgba(255,255,255,0.05); color: var(--accent); border-bottom: 2px solid var(--border); }
@@ -160,12 +171,11 @@
     .checkpoint-list li { display: flex; align-items: baseline; gap: 10px; padding: 9px 14px; margin-bottom: 8px; background: rgba(80,250,123,0.05); border: 1px solid rgba(80,250,123,0.2); border-radius: 6px; font-size: 0.88rem; }
     .checkpoint-list li code { color: var(--success); }
 
-    .act-btn { padding: 6px 14px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all 0.15s; }
-    .act-btn:hover { border-color: var(--muted); color: var(--text); background: rgba(255,255,255,0.04); }
-    .act-wrap { position: relative; background: #1a1d27; padding: 20px; border-radius: 8px; overflow-x: auto; min-height: 80px; }
+    .act-wrap { position: relative; background: #1a1d27; padding: 44px 20px 20px; border-radius: 8px; overflow: hidden; min-height: 80px; cursor: grab; user-select: none; }
+    .act-wrap.grabbing { cursor: grabbing; }
     .act-wrap:hover { outline: 1px solid var(--border); }
-    .act-open-link { position: absolute; top: 10px; right: 14px; font-size: 0.72rem; color: var(--muted); opacity: 0; transition: opacity 0.15s; cursor: pointer; z-index: 10; user-select: none; }
-    .act-wrap:hover .act-open-link { opacity: 1; }
+    .act-controls { position: absolute; top: 8px; left: 10px; right: 10px; display: flex; align-items: center; justify-content: space-between; opacity: 0; transition: opacity 0.15s; z-index: 10; pointer-events: none; }
+    .act-wrap:hover .act-controls { opacity: 1; pointer-events: auto; }
 
     footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.78rem; text-align: center; }
   </style>
@@ -209,22 +219,26 @@
     <section>
       <h3>Activity Diagram</h3>
       <script>window.ACTIVITY_DATA = {{ACTIVITY_DIAGRAM_DATA}};</script>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 10px">
-        <span style="font-size:0.83rem;color:var(--muted)" id="act-lbl">Loading…</span>
-        <div style="display:flex;gap:8px">
-          <button class="act-btn" onclick="actCollapseAll()">Collapse all</button>
-          <button class="act-btn" onclick="actExpandAll()">Expand all</button>
-        </div>
-      </div>
-      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">Click a <strong>📦 phase node</strong> to expand it. Click the <strong>▾ header</strong> to collapse it.</p>
       <div class="act-wrap">
-        <span class="act-open-link" onclick="openActivityDiagram()">⤢ open full size</span>
+        <div class="act-controls">
+          <div style="display:flex;align-items:center;gap:6px">
+            <button class="diag-btn" onclick="actCollapseAll()">Collapse all</button>
+            <button class="diag-btn" onclick="actExpandAll()">Expand all</button>
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="diag-btn" title="Zoom in"    onclick="actZoomIn()">+</button>
+            <button class="diag-btn" title="Zoom out"   onclick="actZoomOut()">−</button>
+            <button class="diag-btn" title="Reset zoom" onclick="actReset()">⊙</button>
+            <button class="diag-btn" title="Flip direction" onclick="actFlip()">↺</button>
+            <button class="diag-btn" title="Open full size" onclick="openActivityModal()">⤢</button>
+          </div>
+        </div>
         <div id="act-cont"></div>
       </div>
     </section>
     <section>
       <h3>Actor Sequence</h3>
-      <div class="mermaid-wrap" onclick="openDiagram(this)"><div class="mermaid">{{SEQUENCE_CODE}}</div></div>
+      <div class="mermaid-wrap"><div class="mermaid">{{SEQUENCE_CODE}}</div></div>
     </section>
   </div>
 
@@ -258,6 +272,21 @@
   <!-- RISKS & RESILIENCE (conditional) -->
   {{RR_TAB_PANEL}}
 
+  <div class="diag-modal" id="diag-modal">
+    <div class="diag-modal-bar">
+      <div id="modal-act-controls" style="display:none;align-items:center;gap:4px;margin-right:4px">
+        <button class="diag-btn" onclick="modalActCollapseAll()">Collapse all</button>
+        <button class="diag-btn" onclick="modalActExpandAll()">Expand all</button>
+        <button class="diag-btn" title="Flip direction" onclick="modalActFlip()">↺</button>
+      </div>
+      <button class="diag-btn" title="Zoom in"    onclick="modalZoomIn()">+</button>
+      <button class="diag-btn" title="Zoom out"   onclick="modalZoomOut()">−</button>
+      <button class="diag-btn" title="Reset zoom" onclick="modalReset()">⊙</button>
+      <button class="diag-btn" title="Close" onclick="closeDiagramModal()" style="margin-left:auto">✕</button>
+    </div>
+    <div class="diag-modal-body" id="diag-modal-body"></div>
+  </div>
+
   <footer>Generated by OpenClaw Skill Architect · {{SKILL_NAME}}</footer>
 </div>
 
@@ -277,50 +306,109 @@
     if (rendered.has(id)) return;
     rendered.add(id);
     const nodes = document.querySelectorAll('#' + id + ' .mermaid');
-    if (nodes.length > 0) mermaid.run({ nodes: Array.from(nodes) });
+    if (nodes.length > 0) mermaid.run({ nodes: Array.from(nodes) }).then(() => setupDiagramControls(id));
     if (id === 'diagrams' && window.initActivityDiagram) window.initActivityDiagram();
   }
   window.addEventListener('DOMContentLoaded', () => initPanel('overview'));
 
-  function openDiagram(wrap) {
-    const svg = wrap.querySelector('svg');
-    if (!svg) return;
-    const rect = svg.getBoundingClientRect();
-    const scale = 2;
-    const clone = svg.cloneNode(true);
-    clone.setAttribute('width', rect.width);
-    clone.setAttribute('height', rect.height);
-    const svgBlob = new Blob([new XMLSerializer().serializeToString(clone)], {type: 'image/svg+xml;charset=utf-8'});
-    const svgUrl = URL.createObjectURL(svgBlob);
-    const img = new Image();
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      canvas.width = rect.width * scale;
-      canvas.height = rect.height * scale;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#0f1117';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.scale(scale, scale);
-      ctx.drawImage(img, 0, 0);
-      URL.revokeObjectURL(svgUrl);
-      canvas.toBlob(function(blob) {
-        window.open(URL.createObjectURL(blob), '_blank');
-      }, 'image/png');
-    };
-    img.onerror = function() {
-      URL.revokeObjectURL(svgUrl);
-      window.open(URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], {type: 'image/svg+xml'})), '_blank');
-    };
-    img.src = svgUrl;
-  }
+  // Diagram fullscreen modal
+  (function() {
+    let origVB, vx, vy, vw, vh, modalSvg, modalBody;
+    let _dragging, _startX, _startY, _startVx, _startVy;
 
-  function openActivityDiagram() {
-    const svg = document.getElementById('act-cont').querySelector('svg');
-    if (!svg) return;
-    const svgStr = new XMLSerializer().serializeToString(svg);
-    const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:24px;background:#0f1117}svg{width:100%;height:auto}</style></head><body>' + svgStr + '</body></html>';
-    window.open(URL.createObjectURL(new Blob([html], {type: 'text/html;charset=utf-8'})), '_blank');
-  }
+    function applyVB() {
+      modalSvg.setAttribute('viewBox', vx + ' ' + vy + ' ' + vw + ' ' + vh);
+    }
+
+    function onWheel(e) {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 0.85 : 1.18;
+      const rect = modalSvg.getBoundingClientRect();
+      const mx = vx + (e.clientX - rect.left) / rect.width  * vw;
+      const my = vy + (e.clientY - rect.top)  / rect.height * vh;
+      vw *= factor; vh *= factor;
+      vx = mx - (e.clientX - rect.left) / rect.width  * vw;
+      vy = my - (e.clientY - rect.top)  / rect.height * vh;
+      applyVB();
+    }
+
+    function onMouseDown(e) {
+      if (e.button !== 0) return;
+      _dragging = true;
+      _startX = e.clientX; _startY = e.clientY;
+      _startVx = vx; _startVy = vy;
+      modalBody.classList.add('grabbing');
+      e.preventDefault();
+    }
+
+    function onMouseMove(e) {
+      if (!_dragging) return;
+      const rect = modalSvg.getBoundingClientRect();
+      vx = _startVx - (e.clientX - _startX) / rect.width  * vw;
+      vy = _startVy - (e.clientY - _startY) / rect.height * vh;
+      applyVB();
+    }
+
+    function onMouseUp() {
+      _dragging = false;
+      if (modalBody) modalBody.classList.remove('grabbing');
+    }
+
+    window.initModalSvg = function(svgEl) {
+      svgEl.removeAttribute('width');
+      svgEl.removeAttribute('height');
+      modalSvg = svgEl;
+      origVB = svgEl.getAttribute('viewBox');
+      if (!origVB) {
+        const r = svgEl.getBoundingClientRect();
+        origVB = '0 0 ' + r.width + ' ' + r.height;
+        svgEl.setAttribute('viewBox', origVB);
+      }
+      const p = origVB.split(' ').map(Number);
+      vx = p[0]; vy = p[1]; vw = p[2]; vh = p[3];
+    };
+
+    window.openModalBody = function() {
+      modalBody = document.getElementById('diag-modal-body');
+      modalBody.addEventListener('wheel', onWheel, { passive: false });
+      modalBody.addEventListener('mousedown', onMouseDown);
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+      document.getElementById('diag-modal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.openDiagram = function(wrap) {
+      const src = wrap.querySelector('svg');
+      if (!src) return;
+      modalBody = document.getElementById('diag-modal-body');
+      const clone = src.cloneNode(true);
+      clone.style.cssText = '';
+      modalBody.innerHTML = '';
+      modalBody.appendChild(clone);
+      window.initModalSvg(clone);
+      window.openModalBody();
+    };
+
+    window.closeDiagramModal = function() {
+      if (modalBody) {
+        modalBody.removeEventListener('wheel', onWheel);
+        modalBody.removeEventListener('mousedown', onMouseDown);
+      }
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      const actCtrl = document.getElementById('modal-act-controls');
+      if (actCtrl) actCtrl.style.display = 'none';
+      document.getElementById('diag-modal').classList.remove('open');
+      document.body.style.overflow = '';
+    };
+
+    window.modalZoomIn  = function() { var cx = vx + vw/2, cy = vy + vh/2; vw *= 0.75; vh *= 0.75; vx = cx - vw/2; vy = cy - vh/2; applyVB(); };
+    window.modalZoomOut = function() { var cx = vx + vw/2, cy = vy + vh/2; vw *= 1.33; vh *= 1.33; vx = cx - vw/2; vy = cy - vh/2; applyVB(); };
+    window.modalReset   = function() { var p = origVB.split(' ').map(Number); vx=p[0]; vy=p[1]; vw=p[2]; vh=p[3]; applyVB(); };
+
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') window.closeDiagramModal(); });
+  })();
 
   function navTo(panelId, anchorId) {
     const tab = document.querySelector('.tab[onclick*="\'' + panelId + '\'"]');
@@ -362,10 +450,121 @@
     initPanel(id);
   }
 
+  // Zoom / pan / pop-out controls for Mermaid diagrams
+  function setupDiagramControls(panelId) {
+    const wraps = document.querySelectorAll('#' + panelId + ' .mermaid-wrap');
+    wraps.forEach(function(wrap) {
+      if (wrap._zoomInit) return;
+      const svg = wrap.querySelector('svg');
+      if (!svg) return;
+      wrap._zoomInit = true;
+
+      // Capture original viewBox (or derive one from rendered dimensions)
+      let origVB = svg.getAttribute('viewBox');
+      if (!origVB) {
+        const w = parseFloat(svg.getAttribute('width'))  || svg.getBoundingClientRect().width;
+        const h = parseFloat(svg.getAttribute('height')) || svg.getBoundingClientRect().height;
+        origVB = '0 0 ' + w + ' ' + h;
+      }
+      svg.setAttribute('viewBox', origVB);
+      // Let CSS (width:100%, height:auto) control display size, not the attributes
+      svg.removeAttribute('width');
+      svg.removeAttribute('height');
+
+      let parts = origVB.split(' ').map(Number);
+      let vx = parts[0], vy = parts[1], vw = parts[2], vh = parts[3];
+
+      function applyVB() {
+        svg.setAttribute('viewBox', vx + ' ' + vy + ' ' + vw + ' ' + vh);
+      }
+
+      // Scroll-wheel zoom (zoom toward cursor position)
+      wrap.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 0.85 : 1.18;
+        const rect = svg.getBoundingClientRect();
+        const mx = vx + (e.clientX - rect.left) / rect.width  * vw;
+        const my = vy + (e.clientY - rect.top)  / rect.height * vh;
+        vw *= factor;
+        vh *= factor;
+        vx = mx - (e.clientX - rect.left) / rect.width  * vw;
+        vy = my - (e.clientY - rect.top)  / rect.height * vh;
+        applyVB();
+      }, { passive: false });
+
+      // Drag-to-pan
+      let dragging = false, startX, startY, startVx, startVy;
+      svg.style.cursor = 'grab';
+      svg.addEventListener('mousedown', function(e) {
+        if (e.button !== 0) return;
+        dragging = true;
+        startX = e.clientX; startY = e.clientY;
+        startVx = vx; startVy = vy;
+        svg.style.cursor = 'grabbing';
+        e.preventDefault();
+      });
+      window.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        const rect = svg.getBoundingClientRect();
+        vx = startVx - (e.clientX - startX) / rect.width  * vw;
+        vy = startVy - (e.clientY - startY) / rect.height * vh;
+        applyVB();
+      });
+      window.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        svg.style.cursor = 'grab';
+      });
+
+      // Button helpers stored on the element so onclick can reach them
+      wrap._zoomIn  = function() { var cx = vx + vw/2, cy = vy + vh/2; vw *= 0.75; vh *= 0.75; vx = cx - vw/2; vy = cy - vh/2; applyVB(); };
+      wrap._zoomOut = function() { var cx = vx + vw/2, cy = vy + vh/2; vw *= 1.33; vh *= 1.33; vx = cx - vw/2; vy = cy - vh/2; applyVB(); };
+      wrap._reset   = function() { var p = origVB.split(' ').map(Number); vx=p[0]; vy=p[1]; vw=p[2]; vh=p[3]; applyVB(); };
+
+      // Inject control buttons
+      var ctrl = document.createElement('div');
+      ctrl.className = 'diag-controls';
+      ctrl.innerHTML =
+        '<button class="diag-btn" title="Zoom in"    onclick="event.stopPropagation();this.closest(\'.mermaid-wrap\')._zoomIn()">+</button>' +
+        '<button class="diag-btn" title="Zoom out"   onclick="event.stopPropagation();this.closest(\'.mermaid-wrap\')._zoomOut()">−</button>' +
+        '<button class="diag-btn" title="Reset zoom" onclick="event.stopPropagation();this.closest(\'.mermaid-wrap\')._reset()">⊙</button>' +
+        '<button class="diag-btn" title="Open full size" onclick="event.stopPropagation();openDiagram(this.closest(\'.mermaid-wrap\'))">⤢</button>';
+      wrap.appendChild(ctrl);
+    });
+  }
+
   // Activity Diagram — data injected via window.ACTIVITY_DATA by render.py
   (function() {
     const SHAPES = new Set(['rect','polygon','circle','ellipse','path']);
     let actState = 0, actUid = 0, actBusy = false;
+    let actSvg = null, actOrigVB = null, actVx, actVy, actVw, actVh;
+    let _actDown = false, _actDragging = false, _actStartX, _actStartY, _actStartVx, _actStartVy;
+    let actDirection = 'LR';
+
+    function applyDirection(src) {
+      return actDirection === 'LR' ? src : src.replace(/^(flowchart|graph)\s+LR\b/m, '$1 TD');
+    }
+
+    function actApplyVB() {
+      if (actSvg) actSvg.setAttribute('viewBox', actVx + ' ' + actVy + ' ' + actVw + ' ' + actVh);
+    }
+
+    function initActZoom(svgEl) {
+      actSvg = svgEl;
+      svgEl.removeAttribute('width');
+      svgEl.removeAttribute('height');
+      svgEl.style.cssText = '';
+      svgEl.style.width  = '100%';
+      svgEl.style.height = 'auto';
+      actOrigVB = svgEl.getAttribute('viewBox');
+      if (!actOrigVB) {
+        const r = svgEl.getBoundingClientRect();
+        actOrigVB = '0 0 ' + r.width + ' ' + r.height;
+        svgEl.setAttribute('viewBox', actOrigVB);
+      }
+      const p = actOrigVB.split(' ').map(Number);
+      actVx = p[0]; actVy = p[1]; actVw = p[2]; actVh = p[3];
+    }
 
     async function showActivity(s) {
       if (actBusy) return;
@@ -375,10 +574,10 @@
       if (!el || !data) { actBusy = false; return; }
       actUid++;
       try {
-        const { svg } = await mermaid.render('actuid' + actUid, data.diagrams[String(s)]);
+        const { svg } = await mermaid.render('actuid' + actUid, applyDirection(data.diagrams[String(s)]));
         el.innerHTML = svg;
         const svgEl = el.querySelector('svg');
-        if (svgEl) { svgEl.style.width = '100%'; svgEl.style.height = 'auto'; }
+        if (svgEl) initActZoom(svgEl);
       } catch(e) {
         el.innerHTML = '<span style="color:#ff5555;font-size:0.84rem">Render error: ' + e.message + '</span>';
         actBusy = false; return;
@@ -394,19 +593,101 @@
           }
         }
       });
-      const n = data.collapsible.length;
-      const exp = data.collapsible.filter(ph => s & ph.bit).length;
-      const lbl = document.getElementById('act-lbl');
-      if (lbl) lbl.innerHTML =
-        exp === 0 ? '<strong>Collapsed</strong> — ' + n + ' phases folded' :
-        exp === n ? '<strong>Expanded</strong> — all phases visible' :
-        '<strong>Partial</strong> — ' + exp + ' of ' + n + ' phases expanded';
       actBusy = false;
     }
 
-    window.actExpandAll   = () => showActivity(window.ACTIVITY_DATA ? window.ACTIVITY_DATA.all_expanded : 0);
-    window.actCollapseAll = () => showActivity(0);
-    window.initActivityDiagram = () => { if (!window._actInit) { window._actInit = true; showActivity(0); } };
+    // Wheel zoom and drag-to-pan wired to the persistent act-wrap element
+    var _actWrap = document.querySelector('.act-wrap');
+    if (_actWrap) {
+      _actWrap.addEventListener('wheel', function(e) {
+        if (!actSvg) return;
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 0.85 : 1.18;
+        const rect = actSvg.getBoundingClientRect();
+        const mx = actVx + (e.clientX - rect.left) / rect.width  * actVw;
+        const my = actVy + (e.clientY - rect.top)  / rect.height * actVh;
+        actVw *= factor; actVh *= factor;
+        actVx = mx - (e.clientX - rect.left) / rect.width  * actVw;
+        actVy = my - (e.clientY - rect.top)  / rect.height * actVh;
+        actApplyVB();
+      }, { passive: false });
+
+      _actWrap.addEventListener('mousedown', function(e) {
+        if (e.button !== 0 || !actSvg || e.target.closest('.act-controls')) return;
+        _actDown = true;
+        _actStartX = e.clientX; _actStartY = e.clientY;
+        _actStartVx = actVx; _actStartVy = actVy;
+      });
+    }
+
+    window.addEventListener('mousemove', function(e) {
+      if (!_actDown || !actSvg) return;
+      const dx = e.clientX - _actStartX, dy = e.clientY - _actStartY;
+      if (!_actDragging && dx * dx + dy * dy < 25) return;
+      if (!_actDragging) { _actDragging = true; if (_actWrap) _actWrap.classList.add('grabbing'); }
+      const rect = actSvg.getBoundingClientRect();
+      actVx = _actStartVx - dx / rect.width  * actVw;
+      actVy = _actStartVy - dy / rect.height * actVh;
+      actApplyVB();
+    });
+
+    window.addEventListener('mouseup', function() {
+      _actDown = false; _actDragging = false;
+      if (_actWrap) _actWrap.classList.remove('grabbing');
+    });
+
+    window.actFlip = function() { actDirection = actDirection === 'LR' ? 'TD' : 'LR'; showActivity(actState); };
+    window.actZoomIn  = function() { if (!actSvg) return; var cx = actVx + actVw/2, cy = actVy + actVh/2; actVw *= 0.75; actVh *= 0.75; actVx = cx - actVw/2; actVy = cy - actVh/2; actApplyVB(); };
+    window.actZoomOut = function() { if (!actSvg) return; var cx = actVx + actVw/2, cy = actVy + actVh/2; actVw *= 1.33; actVh *= 1.33; actVx = cx - actVw/2; actVy = cy - actVh/2; actApplyVB(); };
+    window.actReset   = function() { if (!actSvg || !actOrigVB) return; var p = actOrigVB.split(' ').map(Number); actVx=p[0]; actVy=p[1]; actVw=p[2]; actVh=p[3]; actApplyVB(); };
+    window.openActivityModal = async function() {
+      var data = window.ACTIVITY_DATA;
+      if (!data) return;
+      var mBody = document.getElementById('diag-modal-body');
+      var actCtrl = document.getElementById('modal-act-controls');
+      var _modalState = actState;
+
+      async function renderInModal(s) {
+        _modalState = s;
+        var uid = 'actm' + (++actUid);
+        try {
+          var result = await mermaid.render(uid, applyDirection(data.diagrams[String(s)]));
+          mBody.innerHTML = result.svg;
+          var svgEl = mBody.querySelector('svg');
+          if (svgEl) {
+            window.initModalSvg(svgEl);
+            svgEl.querySelectorAll('g').forEach(function(g) {
+              if (!Array.from(g.children).some(function(c) { return SHAPES.has(c.tagName.toLowerCase()); })) return;
+              var txt = g.textContent || '';
+              for (var i = 0; i < data.collapsible.length; i++) {
+                var ph = data.collapsible[i];
+                if (txt.includes(ph.name)) {
+                  g.setAttribute('style', (g.getAttribute('style') || '') + '; cursor:pointer; pointer-events:all;');
+                  (function(bit) {
+                    g.addEventListener('click', function(e) { e.stopPropagation(); renderInModal(_modalState ^ bit); });
+                  })(ph.bit);
+                  break;
+                }
+              }
+            });
+          }
+        } catch(e) {
+          mBody.innerHTML = '<span style="color:#ff5555;font-size:0.84rem">Render error: ' + e.message + '</span>';
+        }
+      }
+
+      window.modalActCollapseAll = function() { renderInModal(0); };
+      window.modalActExpandAll   = function() { renderInModal(data.all_expanded); };
+      window.modalActFlip        = function() { actDirection = actDirection === 'LR' ? 'TD' : 'LR'; renderInModal(_modalState); };
+
+      if (actCtrl) actCtrl.style.display = 'flex';
+      await renderInModal(actState);
+      window.openModalBody();
+    };
+
+    window.actExpandAll   = function() { showActivity(window.ACTIVITY_DATA ? window.ACTIVITY_DATA.all_expanded : 0); };
+    window.actCollapseAll = function() { showActivity(0); };
+    window.initActivityDiagram = function() { if (!window._actInit) { window._actInit = true; showActivity(0); } };
   })();
 </script>
 </body>
