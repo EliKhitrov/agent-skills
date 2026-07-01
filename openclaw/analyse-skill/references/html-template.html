@@ -357,6 +357,7 @@
     window.initModalSvg = function(svgEl) {
       svgEl.removeAttribute('width');
       svgEl.removeAttribute('height');
+      svgEl.style.cssText = '';
       modalSvg = svgEl;
       origVB = svgEl.getAttribute('viewBox');
       if (!origVB) {
@@ -553,6 +554,7 @@
       actSvg = svgEl;
       svgEl.removeAttribute('width');
       svgEl.removeAttribute('height');
+      const naturalW = parseFloat(svgEl.style.maxWidth) || 0;
       svgEl.style.cssText = '';
       svgEl.style.width  = '100%';
       svgEl.style.height = 'auto';
@@ -564,6 +566,16 @@
       }
       const p = actOrigVB.split(' ').map(Number);
       actVx = p[0]; actVy = p[1]; actVw = p[2]; actVh = p[3];
+      if (naturalW > 0) {
+        const renderedW = svgEl.getBoundingClientRect().width;
+        if (renderedW > naturalW) {
+          const cx = actVx + actVw / 2;
+          actVw = actVw * renderedW / naturalW;
+          actVx = cx - actVw / 2;
+          actOrigVB = actVx + ' ' + actVy + ' ' + actVw + ' ' + actVh;
+          svgEl.setAttribute('viewBox', actOrigVB);
+        }
+      }
     }
 
     async function showActivity(s) {
